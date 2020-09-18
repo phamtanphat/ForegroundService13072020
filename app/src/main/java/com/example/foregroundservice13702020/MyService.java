@@ -17,6 +17,8 @@ import androidx.core.app.NotificationCompat;
 
 public class MyService extends Service {
 
+    Notification mNotification;
+    String CHANNEL_ID = "CHANNEL_ID";
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -26,12 +28,13 @@ public class MyService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mNotification = createNotification(CHANNEL_ID,this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this, "onStartCommand", Toast.LENGTH_SHORT).show();
-
+        startForeground(1,mNotification);
         return START_STICKY;
     }
 
@@ -59,7 +62,6 @@ public class MyService extends Service {
                     NotificationManager.IMPORTANCE_HIGH);
             notificationManager.createNotificationChannel(notificationChannel);
         }
-
         return builder.build();
     }
 }
