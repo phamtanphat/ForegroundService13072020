@@ -8,6 +8,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -19,6 +21,10 @@ public class MyService extends Service {
 
     Notification mNotification;
     String CHANNEL_ID = "CHANNEL_ID";
+    Handler handler;
+    int count = 0;
+    Context mContext;
+    NotificationManager mNotificationManager;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -28,13 +34,28 @@ public class MyService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        mNotification = createNotification(CHANNEL_ID,this);
+        mContext = this;
+        mNotification = createNotification(CHANNEL_ID,mContext,"Ban co thong bao moi");
+        startForeground(1,mNotification);
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        handler = new Handler();
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "onStartCommand", Toast.LENGTH_SHORT).show();
-        startForeground(1,mNotification);
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (count >= 5){
+                    stopSelf();
+                }else{
+                    handler.postDelayed(this,1000);
+                    count++;
+                    mNotificationManager.notify(1,createNotification(CHANNEL_ID,mContext,"Running : " + count));
+                }
+            }
+        },1000);
         return START_STICKY;
     }
 
@@ -44,23 +65,23 @@ public class MyService extends Service {
         Log.d("BBB", "onDestroy");
     }
 
-    private Notification createNotification(String CHANNEL_ID, Context context) {
+    private Notification createNotification(String CHANNEL_ID, Context context , String text) {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(
                         context,
                         CHANNEL_ID)
                         .setContentTitle("Ban co thong bao moi")
-                        .setContentText("Co tin nhan moi")
+                        .setContentText(text)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                         .setShowWhen(true);
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(
                     CHANNEL_ID,
                     "channel",
                     NotificationManager.IMPORTANCE_HIGH);
-            notificationManager.createNotificationChannel(notificationChannel);
+            mNotificationManager.createNotificationChannel(notificationChannel);
         }
         return builder.build();
     }
